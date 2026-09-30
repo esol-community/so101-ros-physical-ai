@@ -1,0 +1,4 @@
+- priority: 80
+  tag: RCLCPP_EXECUTOR_SINGLE_THREADED
+  core_affinity: []
+  scheduling_policy: RR

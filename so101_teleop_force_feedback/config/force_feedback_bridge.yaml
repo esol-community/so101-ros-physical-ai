@@ -1,0 +1,11 @@
+force_feedback_bridge:
+  ros__parameters:
+    follower_state_topic: "/follower/joint_states"
+    leader_state_topic: "/leader/joint_states"
+    leader_command_topic: "/leader/joint_commands"
+    leader_state_pub_topic: "/leader/teleop_force_feedback_joint_states"
+    lock_duration: 0.2
+    joint_names: ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll", "gripper"]
+    joint_ids: [1, 2, 3, 4, 5, 6]
+    current_lock_thresholds: [20.0, 20.0, 30.0, 20.0, 20.0, 20.0]
+    current_unlock_thresholds: [0.5, 0.5, 10.0, 0.5, 0.5, 0.5]

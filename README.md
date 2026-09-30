@@ -7,7 +7,9 @@
 [![MoveIt 2](https://img.shields.io/badge/MoveIt%202-Motion%20Planning-orange)](https://moveit.ros.org/)
 [![Rerun](https://img.shields.io/badge/Rerun-Visualization-purple)](https://www.rerun.io/)
 
-Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, conversion to LeRobot datasets, policy training, policy inference, and live Rerun visualization — all on real hardware.
+Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, conversion to LeRobot datasets, policy training, policy inference, and live Rerun visualization — all on real hardware.    
+
+In addition to standard teleoperation, this fork provides current-based teleop_force_feedback teleoperation with contact feedback and optional real-time execution support using eSOL's `ros2_realtime_support`.
 
 > Sync inference supports ACT and SmolVLA on-device; async inference supports any LeRobot policy via `policy_server`. PRs and issues welcome.
 
@@ -113,6 +115,8 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | Feature                           | Description                                                                                  |
 | --------------------------------- | -------------------------------------------------------------------------------------------- |
 | **Leader/Follower Teleop**        | Real-time joint mirroring from leader arm to follower arm (forward or trajectory controller) |
+| **teleop_force_feedback Teleoperation**       | Current-based contact feedback using follower motor effort measurements and leader joint locking |
+| **ROS 2 Real-Time Support**       | Optional integration with eSOL [ros2_realtime_support](https://github.com/esol-community/ros2_realtime_support) |
 | **ros2_control + Feetech Driver** | Hardware interface for STS3215 servos with configurable joint limits and calibration         |
 | **MoveIt 2 Integration**          | OMPL-based motion planning, joint limits, kinematics (KDL) for the follower arm              |
 | **Multi-Camera Pipeline**         | USB cameras and RealSense D400 series with configurable TF placement                         |
@@ -120,6 +124,17 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | **Rerun Visualization**           | Live visualization of observations, actions, and camera feeds via ROS-to-Rerun bridge (Pixi) |
 | **Policy Inference**              | Sync: ACT & SmolVLA on-device. Async: any LeRobot policy (ACT, SmolVLA, π₀, …) offloaded to a remote GPU server via ZMQ/gRPC |
 | **URDF/Xacro Model**              | Full SO-101 description with STL meshes, separate leader/follower end-effectors              |
+
+## Additional Features in This Fork
+
+This fork extends the original project with:
+
+- Current-based teleop_force_feedback teleoperation
+- Contact detection using follower servo current measurements
+- Leader joint lock feedback mechanism
+- Servo effort acquisition services for Feetech STS3215 motors
+- Optional support for eSOL `ros2_realtime_support`
+- Thread affinity and scheduling configuration through YAML
 
 ---
 
@@ -138,6 +153,9 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | `so101_kinematics`    | Python          | IK control nodes for the SO-101 arm using [robokin](https://github.com/legalaspro/robokin) (Placo) + [Viser](https://viser.studio/) 3D UI — interactive gizmo servo and planned trajectories. See [so101_kinematics README](so101_kinematics/README.md) |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
+| `so101_teleop_force_feedback`     | C++             | Current-based teleop_force_feedback teleoperation node with effort feedback, leader lock mechanism (base to so101_teleop) |
+| `ros2_realtime_support`| C/C++          | **Submodule** — Real-time extensions for ROS2                                                    |
+| `so101_msgs`          | ROS Interface   | Custom service definitions used by teleop_force_feedback teleoperation and servo effort acquisition          |
 
 ---
 
@@ -179,6 +197,15 @@ so101-ros-physical-ai/
 ├── feetech_ros2_driver/     # (submodule) Feetech ros2_control plugin
 ├── scripts/
 │   └── so101_ros2_to_rerun.py
+├── so101_teleop_force_feedback/
+│   ├── src/                 # force_feedback_bridge.cpp, force_feedback_teleop.cpp
+│   ├── config/              # force_feedback_bridge.yaml, force_feedback_realtime.yaml, force_feedback_teleop.yaml
+│   └── launch/
+├── ros2_realtime_support/   # (submodule) Real-time extensions for ROS2
+├── so101_msgs/
+│   ├── include/  
+│   ├── src/              
+│   └── srv/                 # Custom service definitions
 ├── docs/
 │   ├── hardware.md          # Full hardware setup guide (udev, calibration, cameras)
 │   └── assets/
@@ -270,6 +297,34 @@ ros2 launch so101_bringup teleop.launch.py use_cameras:=false use_camera_tf:=fal
 
 # Disable RViz
 ros2 launch so101_bringup teleop.launch.py use_teleop_rviz:=false
+```
+
+### teleop_force_feedback teleop (Leader and Follower)
+
+This mode extends the standard teleoperation pipeline with
+effort feedback from the follower arm.
+
+Motor current values are acquired from the follower servos and
+published as joint effort information.
+When the measured effort exceeds configurable thresholds,
+the corresponding leader joint is locked, providing simple
+contact feedback to the operator.
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 launch so101_bringup force_feedback.launch.py
+```
+
+For more detailed usage, see:  
+
+- [so101_teleop_force_feedback/README.md](./so101_teleop_force_feedback/README.md)
+
+Common overrides:  
+
+```bash
+# Use ros2_realtime_support
+export ROS_THREAD_ATTRS_FILE=~/ros2_ws/src/so101-ros-physical-ai/so101_teleop_force_feedback/config/force_feedback_realtime.yaml
+ros2 launch so101_bringup force_feedback.launch.py
 ```
 
 ### Episode Recording

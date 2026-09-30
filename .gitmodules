@@ -1,4 +1,8 @@
+[submodule "ros2_realtime_support"]
+	path = ros2_realtime_support
+    url = https://github.com/esol-community/ros2_realtime_support.git
+	branch = rolling
 [submodule "feetech_ros2_driver"]
 	path = feetech_ros2_driver
-	url = https://github.com/legalaspro/feetech_ros2_driver.git
-	branch = feat/joint-config-and-calibration
+	url = https://github.com/esol-community/feetech_ros2_driver.git
+	branch = feature/force_feedback
