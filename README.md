@@ -125,17 +125,6 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | **Policy Inference**              | Sync: ACT & SmolVLA on-device. Async: any LeRobot policy (ACT, SmolVLA, π₀, …) offloaded to a remote GPU server via ZMQ/gRPC |
 | **URDF/Xacro Model**              | Full SO-101 description with STL meshes, separate leader/follower end-effectors              |
 
-## Additional Features in This Fork
-
-This fork extends the original project with:
-
-- Current-based teleop_force_feedback teleoperation
-- Contact detection using follower servo current measurements
-- Leader joint lock feedback mechanism
-- Servo effort acquisition services for Feetech STS3215 motors
-- Optional support for eSOL `ros2_realtime_support`
-- Thread affinity and scheduling configuration through YAML
-
 ---
 
 ## Packages
